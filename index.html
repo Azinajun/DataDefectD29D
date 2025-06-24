@@ -960,18 +960,25 @@
       XLSX.utils.book_append_sheet(workbook, worksheet, "Defect Report");
       XLSX.writeFile(workbook, `Defect Report ${dateString}.xlsx`);
 
-      setTimeout(() => {
-        if (confirm("Data berhasil di-export! Apakah Anda ingin mereset form untuk input baru?")) {
-          vinData = [];
-          saveDataToFirebase();
-          document.getElementById("vinForm").reset();
-          document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
-          defectList.innerHTML = "";
-          addDefectEntry();
-          renderTable();
-          renderChart();
-        }
-      }, 500);
+      // Tampilkan dialog konfirmasi
+      const shouldReset = confirm("Data berhasil di-export! Apakah Anda ingin mereset form untuk input baru?");
+      
+      if (shouldReset) {
+        // Reset data hanya jika user mengkonfirmasi
+        vinData = [];
+        // Simpan perubahan ke Firebase DAN localStorage
+        saveDataToFirebase();
+        // Reset form UI
+        document.getElementById("vinForm").reset();
+        document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
+        defectList.innerHTML = "";
+        addDefectEntry();
+        // Update tampilan tabel dan chart
+        renderTable();
+        renderChart();
+        
+        alert("Data telah direset. Anda bisa mulai input baru.");
+      }
     }
     
     // Inisialisasi Awal
