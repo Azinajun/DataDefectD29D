@@ -503,6 +503,29 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    // Inisialisasi Firebase dengan error handling
+    try {
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+      
+      // Set timeout untuk fallback jika koneksi terlalu lama
+      const connectionTimeout = setTimeout(() => {
+        loadFromLocalStorage();
+      }, 5000); // Timeout setelah 5 detik
+
+      database.ref('.info/connected').on('value', (snapshot) => {
+        if (snapshot.val() === true) {
+          clearTimeout(connectionTimeout);
+          loadFromFirebase();
+        } else {
+          loadFromLocalStorage();
+        }
+      });
+    } catch (error) {
+      console.error("Error inisialisasi Firebase:", error);
+      loadFromLocalStorage();
+    }
+    
     // Data Storage
     let vinData = [];
     let editingIndex = null;
@@ -525,7 +548,28 @@
         const data = snapshot.val();
         if (data) {
           vinData = data;
-          // Tambahkan flag isZeroDefect untuk data lama yang belum memilikinya
+          processLoadedData();
+        }
+        hideLoadingIndicator();
+      }, (error) => {
+        console.error("Error memuat dari Firebase:", error);
+        loadFromLocalStorage();
+      });
+    }
+
+   // Fungsi untuk load dari localStorage
+    function loadFromLocalStorage() {
+      console.log("Menggunakan data dari localStorage");
+      const localData = localStorage.getItem("vinData");
+      if (localData) {
+        vinData = JSON.parse(localData);
+        processLoadedData();
+      } else {
+        vinData = [];
+      }
+      hideLoadingIndicator();
+    } 
+    // Tambahkan flag isZeroDefect untuk data lama yang belum memilikinya
           vinData = vinData.map(entry => {
             if (!entry.hasOwnProperty('isZeroDefect') && 
                 entry.defects.some(d => d.category === "Zero Defect")) {
