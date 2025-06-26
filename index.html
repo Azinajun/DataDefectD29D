@@ -9,6 +9,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <!-- Tambahkan Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  
   <style>
     :root {
       --primary: #4361ee;
@@ -355,9 +360,48 @@
     .animated {
       animation: fadeIn 0.4s ease-out forwards;
     }
+    
+    /* Loading indicator */
+    .loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    
+    .loading.active {
+      display: flex;
+    }
+    
+    .loading-spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #4361ee;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
+  <!-- Loading indicator -->
+  <div class="loading" id="loadingIndicator">
+    <div class="loading-spinner"></div>
+    <p style="margin-top: 20px;">Menyambungkan ke database...</p>
+  </div>
+
   <header class="animated">
     <div class="container">
       <h1>Data Defect Audit Unit D29D</h1>
@@ -437,18 +481,84 @@
   </div>
 
   <script>
+    // Tampilkan loading indicator
+    document.getElementById('loadingIndicator').classList.add('active');
+
+    // Konfigurasi Firebase (gunakan data dari Firebase Console Anda)
+    const firebaseConfig = {
+      apiKey: "AIzaSy8s4eUBIcVIC0-oYX3Z3ZNL_aB1TDh91-I",
+      authDomain: "datadefectd29d.firebaseapp.com",
+      databaseURL: "https://datadefectd29d-default-rtdb.firebaseio.com",
+      projectId: "datadefectd29d",
+      storageBucket: "datadefectd29d.appspot.com",
+      messagingSenderId: "167769965936",
+      appId: "1:167769965936:web:a37c794681951edbe77bb5"
+    };
+
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     // Data Storage
-    let vinData = JSON.parse(localStorage.getItem("vinData")) || [];
-    // Tambahkan flag isZeroDefect untuk data lama yang belum memilikinya
-    vinData = vinData.map(entry => {
-      if (!entry.hasOwnProperty('isZeroDefect') && 
-          entry.defects.some(d => d.category === "Zero Defect")) {
-        entry.isZeroDefect = true;
-      }
-      return entry;
-    });
+    let vinData = [];
     let editingIndex = null;
     const defectList = document.getElementById("defectList");
+
+    // Fungsi untuk menyimpan data ke Firebase
+    function saveToFirebase() {
+      return database.ref('vinData').set(vinData)
+        .then(() => console.log("Data tersimpan di Firebase"))
+        .catch(error => {
+          console.error("Error menyimpan ke Firebase:", error);
+          // Simpan ke localStorage sebagai fallback
+          localStorage.setItem("vinData", JSON.stringify(vinData));
+        });
+    }
+
+    // Fungsi untuk memuat data dari Firebase
+    function loadFromFirebase() {
+      database.ref('vinData').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          vinData = data;
+          // Tambahkan flag isZeroDefect untuk data lama yang belum memilikinya
+          vinData = vinData.map(entry => {
+            if (!entry.hasOwnProperty('isZeroDefect') && 
+                entry.defects.some(d => d.category === "Zero Defect")) {
+              entry.isZeroDefect = true;
+            }
+            return entry;
+          });
+          renderTable();
+          renderChart();
+        }
+        // Sembunyikan loading indicator setelah data dimuat
+        document.getElementById('loadingIndicator').classList.remove('active');
+      }, (error) => {
+        console.error("Error memuat dari Firebase:", error);
+        // Coba load dari localStorage jika Firebase gagal
+        const localData = localStorage.getItem("vinData");
+        if (localData) {
+          vinData = JSON.parse(localData);
+          renderTable();
+          renderChart();
+        }
+        document.getElementById('loadingIndicator').classList.remove('active');
+      });
+    }
+
+    // Fungsi Utama untuk menyimpan dan render
+    function saveAndRender() {
+      // Simpan ke localStorage sebagai fallback
+      localStorage.setItem("vinData", JSON.stringify(vinData));
+      
+      // Simpan ke Firebase
+      saveToFirebase()
+        .then(() => {
+          renderTable();
+          renderChart();
+        });
+    }
 
     // Fungsi untuk menyimpan VIN tanpa defect
     function saveZeroDefect() {
@@ -469,7 +579,7 @@
           description: "Unit dinyatakan tidak memiliki defect",
           pic: "N/A"
         }],
-        isZeroDefect: true // Tambahkan flag khusus
+        isZeroDefect: true
       };
       
       if (editingIndex !== null) {
@@ -594,12 +704,12 @@
       const isMobile = window.innerWidth <= 768;
       
       return {
-        indexAxis: 'x', // Ubah orientasi menjadi vertikal
+        indexAxis: 'x',
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false // Sembunyikan legend
+            display: false
           },
           title: {
             display: false,
@@ -613,7 +723,7 @@
           },
           datalabels: {
             anchor: 'end',
-            align: 'right', // Posisi label di sebelah kanan bar
+            align: 'right',
             formatter: (value) => value,
             font: {
               weight: 'bold',
@@ -732,13 +842,6 @@
       });
     }
 
-    // Fungsi Utama
-    function saveAndRender() {
-      localStorage.setItem("vinData", JSON.stringify(vinData));
-      renderTable();
-      renderChart();
-    }
-
     // Event Form Submit
     document.getElementById("vinForm").addEventListener("submit", function(e) {
       e.preventDefault();
@@ -771,16 +874,16 @@
       const newEntry = { date, vin, defects, isZeroDefect: false };
       
       if (editingIndex !== null) {
-        vinData[editingIndex] = newEntry; // Update data yang diedit
+        vinData[editingIndex] = newEntry;
         editingIndex = null;
       } else {
-        vinData.push(newEntry); // Tambah data baru
+        vinData.push(newEntry);
       }
       
       // Reset form
       this.reset();
       defectList.innerHTML = "";
-      addDefectEntry(); // Tambah defect kosong untuk input baru
+      document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
       saveAndRender();
     });
 
@@ -791,7 +894,7 @@
       document.getElementById("vin").value = entry.vin;
       defectList.innerHTML = "";
       if (entry.isZeroDefect) {
-        saveZeroDefect(); // Jika Zero Defect, langsung simpan sebagai Zero Defect
+        saveZeroDefect();
       } else {
         entry.defects.forEach(addDefectEntry);
       }
@@ -836,6 +939,7 @@
         if (confirm("Data berhasil di-export! Apakah Anda ingin mereset form untuk input baru?")) {
           vinData = [];
           localStorage.setItem("vinData", JSON.stringify(vinData));
+          saveToFirebase();
           document.getElementById("vinForm").reset();
           document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
           defectList.innerHTML = "";
@@ -848,7 +952,7 @@
     // Inisialisasi Awal
     document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
     addDefectEntry();
-    saveAndRender();
+    loadFromFirebase();
 
     // Responsive adjustment
     window.addEventListener('resize', function() {
