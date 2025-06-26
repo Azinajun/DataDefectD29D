@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
+  <!-- Tambahkan Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
   
@@ -395,6 +396,7 @@
   </style>
 </head>
 <body>
+  <!-- Loading indicator -->
   <div class="loading" id="loadingIndicator">
     <div class="loading-spinner"></div>
     <p style="margin-top: 20px;">Menyambungkan ke database...</p>
@@ -473,10 +475,6 @@
         <div class="chart-box">
           <h2>Defect per PIC</h2>
           <canvas id="picBarChart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h2>Top 5 Most Frequent Defects</h2>
-          <canvas id="paretoChart"></canvas>
         </div>
       </div>
     </div>
@@ -767,7 +765,6 @@
       if (window.areaChart) window.areaChart.destroy();
       if (window.categoryChart) window.categoryChart.destroy();
       if (window.picChart) window.picChart.destroy();
-      if (window.paretoChart) window.paretoChart.destroy(); // Destroy existing Pareto chart
 
       // Chart Area (Portrait)
       const areaCounts = {};
@@ -841,151 +838,6 @@
           }]
         },
         options: configureChartOptions('Defect per PIC'),
-        plugins: [ChartDataLabels]
-      });
-
-      // Pareto Chart for Top 5 Defects
-      const defectDescriptions = {};
-      filteredData.forEach(v => v.defects.forEach(d => {
-        if (d.description) defectDescriptions[d.description] = (defectDescriptions[d.description] || 0) + 1;
-      }));
-
-      const sortedDefects = Object.entries(defectDescriptions)
-        .sort(([, countA], [, countB]) => countB - countA)
-        .slice(0, 5); // Get top 5
-
-      const paretoLabels = sortedDefects.map(([description]) => description);
-      const paretoData = sortedDefects.map(([, count]) => count);
-
-      const totalDefects = paretoData.reduce((sum, count) => sum + count, 0);
-      let cumulativePercentage = 0;
-      const cumulativeData = paretoData.map(count => {
-        cumulativePercentage += (count / totalDefects) * 100;
-        return cumulativePercentage;
-      });
-
-      window.paretoChart = new Chart(document.getElementById("paretoChart"), {
-        type: "bar",
-        data: {
-          labels: paretoLabels,
-          datasets: [
-            {
-              label: 'Jumlah Defect',
-              data: paretoData,
-              backgroundColor: '#4361ee',
-              yAxisID: 'y',
-              order: 2,
-              borderRadius: 4
-            },
-            {
-              label: 'Kumulatif Persentase',
-              data: cumulativeData,
-              type: 'line',
-              borderColor: '#f72585',
-              borderWidth: 2,
-              fill: false,
-              yAxisID: 'y1',
-              order: 1,
-              pointRadius: 5,
-              pointBackgroundColor: '#f72585',
-              pointBorderColor: '#fff',
-              pointHoverRadius: 7
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            },
-            title: {
-              display: false,
-              text: 'Top 5 Most Frequent Defects',
-              font: {
-                size: window.innerWidth <= 768 ? 16 : 18
-              },
-              padding: {
-                bottom: 20
-              }
-            },
-            datalabels: {
-              display: true,
-              formatter: (value, context) => {
-                if (context.dataset.type === 'line') {
-                  return value.toFixed(1) + '%';
-                }
-                return value;
-              },
-              font: {
-                weight: 'bold',
-                size: window.innerWidth <= 768 ? 10 : 12
-              },
-              color: '#333',
-              anchor: (context) => context.dataset.type === 'line' ? 'end' : 'end',
-              align: (context) => context.dataset.type === 'line' ? 'end' : 'center',
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              ticks: {
-                font: {
-                  size: window.innerWidth <= 768 ? 10 : 12
-                },
-                maxRotation: 45,
-                minRotation: 45
-              },
-              grid: {
-                display: false
-              }
-            },
-            y: {
-              beginAtZero: true,
-              position: 'left',
-              title: {
-                display: true,
-                text: 'Jumlah Defect',
-                font: {
-                  size: window.innerWidth <= 768 ? 12 : 14
-                }
-              },
-              ticks: {
-                font: {
-                  size: window.innerWidth <= 768 ? 10 : 12
-                }
-              },
-              grid: {
-                display: false
-              }
-            },
-            y1: {
-              beginAtZero: true,
-              position: 'right',
-              max: 100,
-              title: {
-                display: true,
-                text: 'Kumulatif Persentase (%)',
-                font: {
-                  size: window.innerWidth <= 768 ? 12 : 14
-                }
-              },
-              ticks: {
-                callback: function(value) {
-                  return value + '%';
-                },
-                font: {
-                  size: window.innerWidth <= 768 ? 10 : 12
-                }
-              },
-              grid: {
-                drawOnChartArea: false // Only draw grid lines for the first Y-axis
-              }
-            }
-          }
-        },
         plugins: [ChartDataLabels]
       });
     }
@@ -1108,7 +960,6 @@
         window.areaChart.update();
         window.categoryChart.update();
         window.picChart.update();
-        window.paretoChart.update();
       }
     });
   </script>
