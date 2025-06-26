@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pendataan Defect Unit D29D Audit</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --accent: #4895ef;
+      --danger: #f72585;
+      --success: #4cc9f0;
+      --excel-green: #217346;
+      --warning: #f8961e;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f7fa;
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      touch-action: manipulation;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 15px;
+      width: 100%;
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 25px 0;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      font-weight: 600;
+      text-align: center;
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      margin-bottom: 5px;
+      padding: 0 10px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--dark);
+      font-size: clamp(14px, 2vw, 16px);
+    }
+    
+    select, input, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      margin-bottom: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      transition: all 0.3s;
+      background-color: white;
+    }
+    
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+      outline: none;
+    }
+    
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: clamp(14px, 2vw, 16px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--secondary);
+      transform: translateY(-2px);
+    }
+    
+    .btn-excel {
+      background-color: var(--excel-green);
+      color: white;
+    }
+    
+    .btn-excel:hover {
+      background-color: #1a5d38;
+      transform: translateY(-2px);
+    }
+    
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background-color: #e5177b;
+      transform: translateY(-2px);
+    }
+    
+    .btn-warning {
+      background-color: var(--warning);
+      color: white;
+    }
+    
+    .btn-warning:hover {
+      background-color: #e68a19;
+      transform: translateY(-2px);
+    }
+    
+    .btn-success {
+      background-color: var(--success);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background-color: #3aa8d8;
+      transform: translateY(-2px);
+    }
+    
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
+      min-width: 600px;
+    }
+    
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: clamp(13px, 2vw, 15px);
+    }
+    
+    th {
+      background-color: var(--primary);
+      color: white;
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+    }
+    
+    tr:hover {
+      background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .defect-entry {
+      background: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .defect-entry:hover {
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+    
+    .chart-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 30px;
+      margin-top: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .chart-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      height: 500px;
+    }
+    
+    .chart-box h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: var(--dark);
+      font-size: clamp(16px, 2vw, 18px);
+      font-weight: 600;
+      text-align: center;
+    }
+    
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .form-header {
+      margin-bottom: 15px;
+    }
+    
+    .form-header h2 {
+      color: var(--dark);
+      font-weight: 600;
+      font-size: clamp(18px, 2vw, 20px);
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .badge-success {
+      background-color: rgba(76, 201, 240, 0.1);
+      color: var(--success);
+    }
+    
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .card {
+        padding: 15px;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .form-actions button {
+        width: 100%;
+      }
+      
+      th, td {
+        padding: 10px 12px;
+      }
+      
+      .chart-box {
+        height: 400px;
+        padding: 15px;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .action-buttons button {
+        width: 100%;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      header {
+        padding: 20px 0;
+      }
+      
+      .defect-entry {
+        padding: 12px;
+      }
+      
+      button {
+        padding: 10px 15px;
+      }
+      
+      select, input, textarea {
+        padding: 10px 12px;
+      }
+      
+      .chart-box {
+        height: 350px;
+      }
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animated {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <header class="animated">
+    <div class="container">
+      <h1>Data Defect Audit Unit D29D</h1>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="card animated" style="animation-delay: 0.1s;">
+      <div class="form-header">
+        <h2>Form Input Defect</h2>
+      </div>
+      
+      <form id="vinForm">
+        <label for="vinDate">Tanggal:</label>
+        <input type="date" id="vinDate" required>
+
+        <label for="vin">VIN:</label>
+        <input type="text" id="vin" required placeholder="Masukkan VIN">
+
+        <div id="defectList"></div>
+
+        <div class="form-actions">
+          <button type="button" onclick="addDefectEntry()" class="btn-warning">
+            <i class="fas fa-plus"></i> Tambah Defect
+          </button>
+          <button type="button" onclick="saveZeroDefect()" class="btn-success">
+            <i class="fas fa-check-circle"></i> Zero Defect
+          </button>
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i> Simpan VIN
+          </button>
+          <button type="button" onclick="exportToExcel()" class="btn-excel">
+            <i class="fas fa-file-excel"></i> Export ke Excel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card animated" style="animation-delay: 0.2s;">
+      <div class="form-header">
+        <h2>Data Defect</h2>
+      </div>
+      <div class="table-container">
+        <table id="vinTable">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>VIN</th>
+              <th>Data Defect</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="animated" style="animation-delay: 0.3s;">
+      <div class="form-header">
+        <h2>Analisis Defect</h2>
+      </div>
+      <div class="chart-container">
+        <div class="chart-box">
+          <h2>Defect per Area</h2>
+          <canvas id="defectChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h2>Defect per Kategori</h2>
+          <canvas id="categoryBarChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h2>Defect per PIC</h2>
+          <canvas id="picBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data Storage
+    let vinData = JSON.parse(localStorage.getItem("vinData")) || [];
+    // Tambahkan flag isZeroDefect untuk data lama yang belum memilikinya
+    vinData = vinData.map(entry => {
+      if (!entry.hasOwnProperty('isZeroDefect') && 
+          entry.defects.some(d => d.category === "Zero Defect")) {
+        entry.isZeroDefect = true;
+      }
+      return entry;
+    });
+    let editingIndex = null;
+    const defectList = document.getElementById("defectList");
+
+    // Fungsi untuk menyimpan VIN tanpa defect
+    function saveZeroDefect() {
+      const date = document.getElementById("vinDate").value;
+      const vin = document.getElementById("vin").value;
+      
+      if (!date || !vin) {
+        alert("Tanggal dan VIN harus diisi!");
+        return;
+      }
+      
+      const newEntry = { 
+        date, 
+        vin, 
+        defects: [{
+          category: "Zero Defect",
+          area: "N/A",
+          description: "Unit dinyatakan tidak memiliki defect",
+          pic: "N/A"
+        }],
+        isZeroDefect: true // Tambahkan flag khusus
+      };
+      
+      if (editingIndex !== null) {
+        vinData[editingIndex] = newEntry;
+        editingIndex = null;
+      } else {
+        vinData.push(newEntry);
+      }
+      
+      // Reset form
+      document.getElementById("vinForm").reset();
+      document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
+      defectList.innerHTML = "";
+      saveAndRender();
+      
+      alert("Data Zero Defect berhasil disimpan!");
+    }
+
+    // Fungsi Tambah Defect
+    function addDefectEntry(defect = {}) {
+      const div = document.createElement("div");
+      div.className = "defect-entry";
+      div.innerHTML = `
+        <label>Kategori Defect:</label>
+        <select class="category" required>
+          <option value="">-- Pilih Kategori --</option>
+          <option>Function</option>
+          <option>Body Fitting</option>
+          <option>Appearance</option>
+        </select>
+
+        <label>Area Defect:</label>
+        <select class="area" required>
+          <option value="">-- Pilih Area --</option>
+          <option>Fr door outer Rh</option>
+          <option>Fr door inner & opening Rh</option>
+          <option>Rr door outer right</option>
+          <option>Rr door inner & opening Rh</option>
+          <option>Fr door outer Lh</option>
+          <option>Fr door inner & opening Lh</option>
+          <option>Rr door outer Lh</option>
+          <option>Rr door inner & opening Lh</option>
+          <option>Engine room Rh</option>
+          <option>Engine room Lh</option>
+          <option>Engine front</option>
+          <option>Engine hood outer</option>
+          <option>Engine hood inner</option>
+          <option>Back door outer</option>
+          <option>Back door inner & opening</option>
+          <option>Inner cabin Rh</option>
+          <option>Inner cabin Lh</option>
+          <option>Roof</option>
+          <option>Fuel lid inner & opening</option>
+          <option>Under Body</option>
+        </select>
+
+        <label>Deskripsi Defect:</label>
+        <textarea class="description" required placeholder="Deskripsi defect...">${defect.description || ""}</textarea>
+
+        <label>PIC Shop:</label>
+        <select class="pic" required>
+          <option value="">-- Pilih PIC --</option>
+          <option>Welding</option>
+          <option>Tosso</option>
+          <option>Assy</option>
+          <option>Other</option>
+        </select>
+
+        <button type="button" onclick="this.parentElement.remove()" class="btn-danger">
+          <i class="fas fa-trash"></i> Hapus Defect
+        </button>
+      `;
+      
+      // Set nilai jika edit
+      if (defect.category) div.querySelector(".category").value = defect.category;
+      if (defect.area) div.querySelector(".area").value = defect.area;
+      if (defect.pic) div.querySelector(".pic").value = defect.pic;
+      
+      defectList.appendChild(div);
+    }
+
+    // Render Tabel
+    function renderTable() {
+      const tbody = document.querySelector("#vinTable tbody");
+      tbody.innerHTML = "";
+      
+      vinData.forEach((entry, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${entry.date}</td>
+          <td>${entry.vin}</td>
+          <td>
+            ${entry.isZeroDefect ? 
+              '<span class="badge badge-success">Zero Defect</span>' : 
+              `<ul style="margin: 0; padding-left: 20px;">
+                ${entry.defects.map(d => `
+                  <li>
+                    <strong>${d.category}</strong> - 
+                    ${d.area}, ${d.description} (PIC: ${d.pic})
+                  </li>
+                `).join("")}
+              </ul>`
+            }
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button onclick="editVIN(${index})" class="btn-primary">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button onclick="deleteVIN(${index})" class="btn-danger">
+                <i class="fas fa-trash"></i> Hapus
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Fungsi untuk konfigurasi chart portrait
+    function configureChartOptions(title) {
+      const isMobile = window.innerWidth <= 768;
+      
+      return {
+        indexAxis: 'x', // Ubah orientasi menjadi vertikal
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false // Sembunyikan legend
+          },
+          title: {
+            display: false,
+            text: title,
+            font: {
+              size: isMobile ? 16 : 18
+            },
+            padding: {
+              bottom: 20
+            }
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'right', // Posisi label di sebelah kanan bar
+            formatter: (value) => value,
+            font: {
+              weight: 'bold',
+              size: isMobile ? 10 : 12
+            },
+            color: '#333'
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              font: {
+                size: isMobile ? 12 : 13
+              }
+            },
+            grid: {
+              display: false
+            }
+          },
+          y: {
+            ticks: {
+              font: {
+                size: isMobile ? 12 : 14
+              }
+            },
+            grid: {
+              display: false
+            }
+          }
+        }
+      };
+    }
+
+    // Render Chart dalam mode portrait
+    function renderChart() {
+      const filteredData = vinData.filter(entry => !entry.isZeroDefect);
+
+      if (window.areaChart) window.areaChart.destroy();
+      if (window.categoryChart) window.categoryChart.destroy();
+      if (window.picChart) window.picChart.destroy();
+
+      // Chart Area (Portrait)
+      const areaCounts = {};
+      filteredData.forEach(v => v.defects.forEach(d => {
+        if (d.area && d.area !== "N/A") areaCounts[d.area] = (areaCounts[d.area] || 0) + 1;
+      }));
+      
+      window.areaChart = new Chart(document.getElementById("defectChart"), {
+        type: "bar",
+        data: {
+          labels: Object.keys(areaCounts),
+          datasets: [{
+            data: Object.values(areaCounts),
+            backgroundColor: [
+              '#4361ee', '#4cc9f0', '#9b59b6', '#f72585', 
+              '#f8961e', '#2ecc71', '#e74c3c', '#3498db'
+            ],
+            borderColor: '#fff',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: configureChartOptions('Defect per Area'),
+        plugins: [ChartDataLabels]
+      });
+
+      // Chart Kategori (Portrait)
+      const categoryCounts = {};
+      filteredData.forEach(v => v.defects.forEach(d => {
+        if (d.category && d.category !== "Zero Defect") categoryCounts[d.category] = (categoryCounts[d.category] || 0) + 1;
+      }));
+      
+      window.categoryChart = new Chart(document.getElementById("categoryBarChart"), {
+        type: "bar",
+        data: {
+          labels: Object.keys(categoryCounts),
+          datasets: [{
+            data: Object.values(categoryCounts),
+            backgroundColor: [
+              '#4cc9f0', '#4361ee', '#9b59b6', 
+              '#f72585', '#f8961e'
+            ],
+            borderColor: '#fff',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: configureChartOptions('Defect per Kategori'),
+        plugins: [ChartDataLabels]
+      });
+
+      // Chart PIC (Portrait)
+      const picCounts = {};
+      filteredData.forEach(v => v.defects.forEach(d => {
+        if (d.pic && d.pic !== "N/A") picCounts[d.pic] = (picCounts[d.pic] || 0) + 1;
+      }));
+      
+      window.picChart = new Chart(document.getElementById("picBarChart"), {
+        type: "bar",
+        data: {
+          labels: Object.keys(picCounts),
+          datasets: [{
+            data: Object.values(picCounts),
+            backgroundColor: [
+              '#9b59b6', '#4361ee', '#4cc9f0',
+              '#f72585', '#f8961e'
+            ],
+            borderColor: '#fff',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: configureChartOptions('Defect per PIC'),
+        plugins: [ChartDataLabels]
+      });
+    }
+
+    // Fungsi Utama
+    function saveAndRender() {
+      localStorage.setItem("vinData", JSON.stringify(vinData));
+      renderTable();
+      renderChart();
+    }
+
+    // Event Form Submit
+    document.getElementById("vinForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      
+      const date = document.getElementById("vinDate").value;
+      const vin = document.getElementById("vin").value;
+      const defects = [];
+      
+      // Kumpulkan data defect
+      document.querySelectorAll(".defect-entry").forEach(div => {
+        const defect = {
+          category: div.querySelector(".category").value,
+          area: div.querySelector(".area").value,
+          description: div.querySelector(".description").value,
+          pic: div.querySelector(".pic").value
+        };
+        
+        // Validasi: semua field harus diisi
+        if (defect.category && defect.area && defect.description && defect.pic) {
+          defects.push(defect);
+        }
+      });
+      
+      if (defects.length === 0) {
+        alert("Error: Semua defect harus memiliki kategori, area, deskripsi, dan PIC!");
+        return;
+      }
+      
+      // Simpan data
+      const newEntry = { date, vin, defects, isZeroDefect: false };
+      
+      if (editingIndex !== null) {
+        vinData[editingIndex] = newEntry; // Update data yang diedit
+        editingIndex = null;
+      } else {
+        vinData.push(newEntry); // Tambah data baru
+      }
+      
+      // Reset form
+      this.reset();
+      defectList.innerHTML = "";
+      addDefectEntry(); // Tambah defect kosong untuk input baru
+      saveAndRender();
+    });
+
+    // Fungsi Edit/Hapus
+    function editVIN(index) {
+      const entry = vinData[index];
+      document.getElementById("vinDate").value = entry.date;
+      document.getElementById("vin").value = entry.vin;
+      defectList.innerHTML = "";
+      if (entry.isZeroDefect) {
+        saveZeroDefect(); // Jika Zero Defect, langsung simpan sebagai Zero Defect
+      } else {
+        entry.defects.forEach(addDefectEntry);
+      }
+      editingIndex = index;
+    }
+
+    function deleteVIN(index) {
+      if (confirm("Yakin ingin menghapus data ini?")) {
+        vinData.splice(index, 1);
+        saveAndRender();
+      }
+    }
+
+    // Export Excel
+    function exportToExcel() {
+      const today = new Date();
+      const dateString = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth()+1).padStart(2, '0')}-${today.getFullYear()}`;
+
+      // Proses export Excel
+      const flatData = [];
+      vinData.forEach(item => {
+        item.defects.forEach(def => {
+          flatData.push({
+            "Tanggal": item.date,
+            "VIN": item.vin,
+            "Kategori": def.category,
+            "Area": def.area,
+            "Deskripsi": def.description,
+            "PIC": def.pic,
+            "Status": item.isZeroDefect ? "Zero Defect" : "With Defect"
+          });
+        });
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(flatData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Defect Report");
+      XLSX.writeFile(workbook, `Defect Report ${dateString}.xlsx`);
+
+      // Tanyakan konfirmasi sebelum reset data
+      setTimeout(() => {
+        if (confirm("Data berhasil di-export! Apakah Anda ingin mereset form untuk input baru?")) {
+          vinData = [];
+          localStorage.setItem("vinData", JSON.stringify(vinData));
+          document.getElementById("vinForm").reset();
+          document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
+          defectList.innerHTML = "";
+          addDefectEntry();
+          saveAndRender();
+        }
+      }, 500);
+    }
+    
+    // Inisialisasi Awal
+    document.getElementById("vinDate").value = new Date().toISOString().split("T")[0];
+    addDefectEntry();
+    saveAndRender();
+
+    // Responsive adjustment
+    window.addEventListener('resize', function() {
+      if (window.areaChart) {
+        window.areaChart.update();
+        window.categoryChart.update();
+        window.picChart.update();
+      }
+    });
+  </script>
+</body>
+</html>
