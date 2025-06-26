@@ -520,6 +520,13 @@
           updateConnectionStatus(false);
           loadFromLocalStorage();
         });
+     
+auth.signInAnonymously().catch(error => {
+  console.error("Login error:", error);
+  alert("Gagal terhubung ke server. Mode offline diaktifkan.");
+  userId = "offline-" + Math.random().toString(36).substr(2, 9);
+  loadFromLocalStorage();
+});
     }
 
     // Dengarkan perubahan status auth
@@ -538,6 +545,15 @@
       updateConnectionStatus(snapshot.val() === true);
     });
 
+    // Set timeout 5 detik untuk koneksi Firebase
+const connectionTimeout = setTimeout(() => {
+  if (!userId) {
+    userId = "offline-" + Date.now();
+    loadFromLocalStorage();
+    alert("Koneksi timeout. Bekerja dalam mode offline.");
+  }
+}, 5000);
+    
     // Fungsi untuk memuat data dari Firebase
     <script>
     // [Bagian konfigurasi Firebase tetap sama]
