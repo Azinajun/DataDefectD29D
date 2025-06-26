@@ -292,20 +292,6 @@
       color: var(--success);
     }
     
-    /* Style khusus untuk chart pareto */
-    #descriptionChart {
-      max-height: 400px;
-    }
-    
-    .pareto-info {
-      background-color: #f8f9fa;
-      border-left: 4px solid #f72585;
-      padding: 10px 15px;
-      margin-bottom: 15px;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    
     /* Mobile Styles */
     @media (max-width: 768px) {
       .container {
@@ -341,10 +327,6 @@
       .action-buttons button {
         width: 100%;
       }
-      
-      #descriptionChart {
-        max-height: 350px;
-      }
     }
     
     @media (max-width: 480px) {
@@ -366,11 +348,6 @@
       
       .chart-box {
         height: 350px;
-      }
-      
-      .pareto-info {
-        font-size: 13px;
-        padding: 8px 12px;
       }
     }
     
@@ -488,19 +465,16 @@
       </div>
       <div class="chart-container">
         <div class="chart-box">
-          <h2>Top 5 Defect (Pareto)</h2>
-          <div class="pareto-info" id="paretoInfo">
-            Menampilkan 5 defect paling sering yang mencakup 0% dari total defect.
-          </div>
-          <canvas id="descriptionChart"></canvas>
-        </div>
-        <div class="chart-box">
           <h2>Defect per Area</h2>
           <canvas id="defectChart"></canvas>
         </div>
         <div class="chart-box">
           <h2>Defect per Kategori</h2>
           <canvas id="categoryBarChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h2>Defect per PIC</h2>
+          <canvas id="picBarChart"></canvas>
         </div>
       </div>
     </div>
@@ -511,14 +485,14 @@
     document.getElementById('loadingIndicator').classList.add('active');
 
     // Konfigurasi Firebase (gunakan data dari Firebase Console Anda)
-const firebaseConfig = {
-  apiKey: "AIzaSyBs4eUBlcVICO-oYX3Z3ZN_aB1TIDh9l-I",
-  authDomain: "datadefectd29d.firebaseapp.com",
-  databaseURL: "https://datadefectd29d-default-rtdb.firebaseio.com",
-  projectId: "datadefectd29d",
-  storageBucket: "datadefectd29d.firebasestorage.app",
-  messagingSenderId: "167769965936",
-  appId: "1:167769965936:web:a37c794681951e4be77bb5"
+    const firebaseConfig = {
+      apiKey: "AIzaSy8s4eUBIcVIC0-oYX3Z3ZNL_aB1TDh91-I",
+      authDomain: "datadefectd29d.firebaseapp.com",
+      databaseURL: "https://datadefectd29d-default-rtdb.firebaseio.com",
+      projectId: "datadefectd29d",
+      storageBucket: "datadefectd29d.appspot.com",
+      messagingSenderId: "167769965936",
+      appId: "1:167769965936:web:a37c794681951edbe77bb5"
     };
 
     // Inisialisasi Firebase
@@ -790,7 +764,7 @@ const firebaseConfig = {
 
       if (window.areaChart) window.areaChart.destroy();
       if (window.categoryChart) window.categoryChart.destroy();
-      if (window.descriptionChart) window.descriptionChart.destroy();
+      if (window.picChart) window.picChart.destroy();
 
       // Chart Area (Portrait)
       const areaCounts = {};
@@ -842,89 +816,30 @@ const firebaseConfig = {
         plugins: [ChartDataLabels]
       });
 
-      // Chart 5 Defect Pareto (Berdasarkan Deskripsi)
-      const descriptionCounts = {};
-      const descriptionDetails = {};
-
+      // Chart PIC (Portrait)
+      const picCounts = {};
       filteredData.forEach(v => v.defects.forEach(d => {
-        if (d.description && !d.description.includes("Zero Defect")) {
-          const normalizedDesc = d.description.toLowerCase().trim();
-          descriptionCounts[normalizedDesc] = (descriptionCounts[normalizedDesc] || 0) + 1;
-          
-          if (!descriptionDetails[normalizedDesc]) {
-            descriptionDetails[normalizedDesc] = {
-              category: d.category,
-              area: d.area,
-              pic: d.pic
-            };
-          }
-        }
+        if (d.pic && d.pic !== "N/A") picCounts[d.pic] = (picCounts[d.pic] || 0) + 1;
       }));
-
-      // Urutkan dan ambil 5 teratas
-      const sortedDescriptions = Object.entries(descriptionCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5); // Hanya 5 defect utama
-
-      // Hitung total defect untuk persentase
-      const totalDefects = filteredData.reduce((sum, entry) => sum + entry.defects.length, 0);
-
-      window.descriptionChart = new Chart(document.getElementById("descriptionChart"), {
-        type: 'bar',
+      
+      window.picChart = new Chart(document.getElementById("picBarChart"), {
+        type: "bar",
         data: {
-          labels: sortedDescriptions.map(d => {
-            // Sederhanakan label untuk mobile
-            const shortDesc = d[0].length > 25 ? d[0].substring(0, 25) + '...' : d[0];
-            return `${shortDesc} (${((d[1]/totalDefects)*100).toFixed(1)}%)`;
-          }),
+          labels: Object.keys(picCounts),
           datasets: [{
-            data: sortedDescriptions.map(d => d[1]),
+            data: Object.values(picCounts),
             backgroundColor: [
-              '#f72585',  // Warna berbeda untuk setiap bar
-              '#4361ee',
-              '#4cc9f0',
-              '#f8961e',
-              '#3a0ca3'
+              '#9b59b6', '#4361ee', '#4cc9f0',
+              '#f72585', '#f8961e'
             ],
             borderColor: '#fff',
             borderWidth: 1,
             borderRadius: 4
           }]
         },
-        options: {
-          ...configureChartOptions('Top 5 Defect (Pareto)'),
-          plugins: {
-            ...configureChartOptions('Top 5 Defect (Pareto)').plugins,
-            tooltip: {
-              callbacks: {
-                beforeLabel: function(context) {
-                  const desc = sortedDescriptions[context.dataIndex][0];
-                  return `Deskripsi: ${desc}`;
-                },
-                label: function(context) {
-                  return `Jumlah: ${context.raw}`;
-                },
-                afterLabel: function(context) {
-                  const desc = sortedDescriptions[context.dataIndex][0];
-                  const details = descriptionDetails[desc];
-                  return [
-                    `Kategori: ${details.category}`,
-                    `Area: ${details.area}`,
-                    `PIC: ${details.pic}`,
-                    `Persentase: ${((context.raw/totalDefects)*100).toFixed(1)}%`
-                  ];
-                }
-              }
-            }
-          }
-        },
+        options: configureChartOptions('Defect per PIC'),
         plugins: [ChartDataLabels]
       });
-
-      // Hitung persentase pareto
-      const paretoPercentage = sortedDescriptions.reduce((sum, d) => sum + d[1], 0) / totalDefects * 100;
-      document.getElementById('paretoInfo').textContent = 
-        `Menampilkan 5 defect paling sering yang mencakup ${paretoPercentage.toFixed(1)}% dari total defect.`;
     }
 
     // Event Form Submit
@@ -1044,7 +959,7 @@ const firebaseConfig = {
       if (window.areaChart) {
         window.areaChart.update();
         window.categoryChart.update();
-        window.descriptionChart.update();
+        window.picChart.update();
       }
     });
   </script>
