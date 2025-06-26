@@ -539,55 +539,54 @@
     });
 
     // Fungsi untuk memuat data dari Firebase
+    <script>
+    // [Bagian konfigurasi Firebase tetap sama]
+
+    // Perbaikan fungsi loadData()
     function loadData() {
       db.ref('vinData/' + userId).on('value', (snapshot) => {
         const data = snapshot.val();
+        console.log("Data diterima dari Firebase:", data); // Log untuk debugging
+        
         if (data) {
-          // Konversi object Firebase ke array jika perlu
+          // Pastikan data selalu berupa array
           vinData = Array.isArray(data) ? data : Object.values(data);
-          saveToLocalStorage(); // Simpan ke localStorage sebagai backup
+          console.log("Data setelah konversi:", vinData); // Log untuk debugging
+          
+          saveToLocalStorage();
           renderTable();
           renderChart();
+          
+          // Tambahkan alert sementara untuk debugging
+          alert(`Data berhasil dimuat (${vinData.length} records)`);
         } else {
-          // Jika tidak ada data di Firebase, coba muat dari localStorage
+          console.log("Tidak ada data di Firebase, memuat dari localStorage");
           loadFromLocalStorage();
         }
       }, (error) => {
-        console.error("Error loading data: ", error);
-        updateConnectionStatus(false);
+        console.error("Error loading data:", error);
+        alert("Error memuat data: " + error.message);
         loadFromLocalStorage();
       });
     }
 
-    // Fungsi untuk memuat dari localStorage (fallback)
-    function loadFromLocalStorage() {
-      const localData = JSON.parse(localStorage.getItem("vinData")) || [];
-      vinData = localData;
-      renderTable();
-      renderChart();
-    }
-
-    // Fungsi untuk menyimpan ke localStorage (backup)
-    function saveToLocalStorage() {
-      localStorage.setItem("vinData", JSON.stringify(vinData));
-    }
-
-    // Fungsi untuk menyimpan data ke Firebase
+    // Perbaikan fungsi saveDataToFirebase()
     function saveDataToFirebase() {
+      console.log("Menyimpan data ke Firebase:", vinData); // Log untuk debugging
+      
       db.ref('vinData/' + userId).set(vinData)
         .then(() => {
-          console.log("Data saved to Firebase");
+          console.log("Data berhasil disimpan ke Firebase");
           saveToLocalStorage();
-          updateConnectionStatus(true);
+          alert("Data tersimpan!"); // Notifikasi untuk user
         })
         .catch((error) => {
-          console.error("Error saving to Firebase: ", error);
-          saveToLocalStorage(); // Simpan ke localStorage jika gagal
-          updateConnectionStatus(false);
-          alert("Gagal menyimpan ke database. Data disimpan secara lokal.");
+          console.error("Gagal menyimpan ke Firebase:", error);
+          alert("Gagal menyimpan. Data disimpan lokal storage.");
+          saveToLocalStorage();
         });
     }
-
+    
     // Fungsi untuk menyimpan VIN tanpa defect
     function saveZeroDefect() {
       const date = document.getElementById("vinDate").value;
