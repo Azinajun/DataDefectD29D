@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pendataan Defect Unit D29D Audit</title>
+  <title>Pendataan Defect Unit D29D Audit - Pareto Analysis</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -292,6 +292,20 @@
       color: var(--success);
     }
     
+    /* Style khusus untuk chart pareto */
+    #descriptionChart {
+      max-height: 400px;
+    }
+    
+    .pareto-info {
+      background-color: #f8f9fa;
+      border-left: 4px solid #f72585;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
     /* Mobile Styles */
     @media (max-width: 768px) {
       .container {
@@ -327,6 +341,10 @@
       .action-buttons button {
         width: 100%;
       }
+      
+      #descriptionChart {
+        max-height: 350px;
+      }
     }
     
     @media (max-width: 480px) {
@@ -348,6 +366,11 @@
       
       .chart-box {
         height: 350px;
+      }
+      
+      .pareto-info {
+        font-size: 13px;
+        padding: 8px 12px;
       }
     }
     
@@ -465,16 +488,19 @@
       </div>
       <div class="chart-container">
         <div class="chart-box">
+          <h2>Top 5 Defect (Pareto)</h2>
+          <div class="pareto-info" id="paretoInfo">
+            Menampilkan 5 defect paling sering yang mencakup 0% dari total defect.
+          </div>
+          <canvas id="descriptionChart"></canvas>
+        </div>
+        <div class="chart-box">
           <h2>Defect per Area</h2>
           <canvas id="defectChart"></canvas>
         </div>
         <div class="chart-box">
           <h2>Defect per Kategori</h2>
           <canvas id="categoryBarChart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h2>Defect per PIC</h2>
-          <canvas id="picBarChart"></canvas>
         </div>
       </div>
     </div>
@@ -764,7 +790,7 @@
 
       if (window.areaChart) window.areaChart.destroy();
       if (window.categoryChart) window.categoryChart.destroy();
-      if (window.picChart) window.picChart.destroy();
+      if (window.descriptionChart) window.descriptionChart.destroy();
 
       // Chart Area (Portrait)
       const areaCounts = {};
@@ -816,30 +842,89 @@
         plugins: [ChartDataLabels]
       });
 
-      // Chart PIC (Portrait)
-      const picCounts = {};
+      // Chart 5 Defect Pareto (Berdasarkan Deskripsi)
+      const descriptionCounts = {};
+      const descriptionDetails = {};
+
       filteredData.forEach(v => v.defects.forEach(d => {
-        if (d.pic && d.pic !== "N/A") picCounts[d.pic] = (picCounts[d.pic] || 0) + 1;
+        if (d.description && !d.description.includes("Zero Defect")) {
+          const normalizedDesc = d.description.toLowerCase().trim();
+          descriptionCounts[normalizedDesc] = (descriptionCounts[normalizedDesc] || 0) + 1;
+          
+          if (!descriptionDetails[normalizedDesc]) {
+            descriptionDetails[normalizedDesc] = {
+              category: d.category,
+              area: d.area,
+              pic: d.pic
+            };
+          }
+        }
       }));
-      
-      window.picChart = new Chart(document.getElementById("picBarChart"), {
-        type: "bar",
+
+      // Urutkan dan ambil 5 teratas
+      const sortedDescriptions = Object.entries(descriptionCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5); // Hanya 5 defect utama
+
+      // Hitung total defect untuk persentase
+      const totalDefects = filteredData.reduce((sum, entry) => sum + entry.defects.length, 0);
+
+      window.descriptionChart = new Chart(document.getElementById("descriptionChart"), {
+        type: 'bar',
         data: {
-          labels: Object.keys(picCounts),
+          labels: sortedDescriptions.map(d => {
+            // Sederhanakan label untuk mobile
+            const shortDesc = d[0].length > 25 ? d[0].substring(0, 25) + '...' : d[0];
+            return `${shortDesc} (${((d[1]/totalDefects)*100).toFixed(1)}%)`;
+          }),
           datasets: [{
-            data: Object.values(picCounts),
+            data: sortedDescriptions.map(d => d[1]),
             backgroundColor: [
-              '#9b59b6', '#4361ee', '#4cc9f0',
-              '#f72585', '#f8961e'
+              '#f72585',  // Warna berbeda untuk setiap bar
+              '#4361ee',
+              '#4cc9f0',
+              '#f8961e',
+              '#3a0ca3'
             ],
             borderColor: '#fff',
             borderWidth: 1,
             borderRadius: 4
           }]
         },
-        options: configureChartOptions('Defect per PIC'),
+        options: {
+          ...configureChartOptions('Top 5 Defect (Pareto)'),
+          plugins: {
+            ...configureChartOptions('Top 5 Defect (Pareto)').plugins,
+            tooltip: {
+              callbacks: {
+                beforeLabel: function(context) {
+                  const desc = sortedDescriptions[context.dataIndex][0];
+                  return `Deskripsi: ${desc}`;
+                },
+                label: function(context) {
+                  return `Jumlah: ${context.raw}`;
+                },
+                afterLabel: function(context) {
+                  const desc = sortedDescriptions[context.dataIndex][0];
+                  const details = descriptionDetails[desc];
+                  return [
+                    `Kategori: ${details.category}`,
+                    `Area: ${details.area}`,
+                    `PIC: ${details.pic}`,
+                    `Persentase: ${((context.raw/totalDefects)*100).toFixed(1)}%`
+                  ];
+                }
+              }
+            }
+          }
+        },
         plugins: [ChartDataLabels]
       });
+
+      // Hitung persentase pareto
+      const paretoPercentage = sortedDescriptions.reduce((sum, d) => sum + d[1], 0) / totalDefects * 100;
+      document.getElementById('paretoInfo').textContent = 
+        `Menampilkan 5 defect paling sering yang mencakup ${paretoPercentage.toFixed(1)}% dari total defect.`;
     }
 
     // Event Form Submit
@@ -959,7 +1044,7 @@
       if (window.areaChart) {
         window.areaChart.update();
         window.categoryChart.update();
-        window.picChart.update();
+        window.descriptionChart.update();
       }
     });
   </script>
