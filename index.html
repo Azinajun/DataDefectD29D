@@ -476,6 +476,10 @@
           <h2>Defect per PIC</h2>
           <canvas id="picBarChart"></canvas>
         </div>
+        <div class="chart-box">
+          <h2>Top 5 Defect (Pareto)</h2>
+          <canvas id="paretoChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -758,6 +762,48 @@
       };
     }
 
+    // Fungsi untuk membuat data Pareto (top 5 defect)
+    function getParetoData() {
+      const filteredData = vinData.filter(entry => !entry.isZeroDefect);
+      const defectCounts = {};
+      
+      // Hitung frekuensi setiap defect berdasarkan deskripsi
+      filteredData.forEach(v => v.defects.forEach(d => {
+        if (d.description && d.description !== "Unit dinyatakan tidak memiliki defect") {
+          defectCounts[d.description] = (defectCounts[d.description] || 0) + 1;
+        }
+      }));
+      
+      // Urutkan dari yang paling sering muncul
+      const sortedDefects = Object.entries(defectCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5); // Ambil top 5 saja
+      
+      // Hitung total defect
+      const totalDefects = Object.values(defectCounts).reduce((sum, count) => sum + count, 0);
+      
+      // Hitung persentase kumulatif
+      let cumulativePercentage = 0;
+      const paretoData = sortedDefects.map(([defect, count]) => {
+        const percentage = (count / totalDefects) * 100;
+        cumulativePercentage += percentage;
+        return {
+          defect,
+          count,
+          percentage,
+          cumulativePercentage
+        };
+      });
+      
+      return {
+        labels: paretoData.map(d => d.defect),
+        counts: paretoData.map(d => d.count),
+        percentages: paretoData.map(d => d.percentage),
+        cumulativePercentages: paretoData.map(d => d.cumulativePercentage),
+        totalDefects
+      };
+    }
+
     // Render Chart dalam mode portrait
     function renderChart() {
       const filteredData = vinData.filter(entry => !entry.isZeroDefect);
@@ -765,6 +811,7 @@
       if (window.areaChart) window.areaChart.destroy();
       if (window.categoryChart) window.categoryChart.destroy();
       if (window.picChart) window.picChart.destroy();
+      if (window.paretoChart) window.paretoChart.destroy();
 
       // Chart Area (Portrait)
       const areaCounts = {};
@@ -838,6 +885,113 @@
           }]
         },
         options: configureChartOptions('Defect per PIC'),
+        plugins: [ChartDataLabels]
+      });
+
+      // Pareto Chart (Top 5 Defects)
+      const paretoData = getParetoData();
+      
+      window.paretoChart = new Chart(document.getElementById("paretoChart"), {
+        type: "bar",
+        data: {
+          labels: paretoData.labels,
+          datasets: [
+            {
+              label: 'Jumlah Defect',
+              data: paretoData.counts,
+              backgroundColor: '#4361ee',
+              borderColor: '#fff',
+              borderWidth: 1,
+              borderRadius: 4,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Persentase Kumulatif',
+              data: paretoData.cumulativePercentages,
+              type: 'line',
+              borderColor: '#f72585',
+              borderWidth: 2,
+              fill: false,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.datasetIndex === 0) {
+                    label += context.raw;
+                  } else {
+                    label += context.raw.toFixed(1) + '%';
+                  }
+                  return label;
+                }
+              }
+            },
+            datalabels: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                font: {
+                  size: window.innerWidth <= 768 ? 12 : 13
+                }
+              },
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Jumlah Defect'
+              },
+              ticks: {
+                font: {
+                  size: window.innerWidth <= 768 ? 12 : 14
+                }
+              },
+              grid: {
+                display: false
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Persentase Kumulatif (%)'
+              },
+              min: 0,
+              max: 100,
+              ticks: {
+                font: {
+                  size: window.innerWidth <= 768 ? 12 : 14
+                }
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        },
         plugins: [ChartDataLabels]
       });
     }
@@ -960,6 +1114,7 @@
         window.areaChart.update();
         window.categoryChart.update();
         window.picChart.update();
+        window.paretoChart.update();
       }
     });
   </script>
